@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Photo Editor</title>
+  <style>
+    canvas {
+      border: 1px solid black;
+      cursor: crosshair;
+    }
+  </style>
+</head>
+<body>
+  <h1>Photo Editor</h1>
+  
+  <input type="file" id="upload-input" accept="image/*">
+  <button onclick="clearCanvas()">Clear/Reset</button>
+  
+  <canvas id="canvas"></canvas>
+  
+  <script>
+    var canvas = document.getElementById('canvas');
+    var context = canvas.getContext('2d');
+    var layers = [];
+    var currentLayer = 0;
+    
+    function drawImageOnCanvas(image) {
+      canvas.width = image.width;
+      canvas.height = image.height;
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0);
+    }
+    
+    function handleFileUpload(event) {
+      var file = event.target.files[0];
+      var reader = new FileReader();
+      
+      reader.onload = function(event) {
+        var image = new Image();
+        image.onload = function() {
+          drawImageOnCanvas(image);
+        };
+        image.src = event.target.result;
+      };
+      
+      reader.readAsDataURL(file);
+    }
+    
+    function createNewLayer(image) {
+      var newLayer = new Image();
+      newLayer.onload = function() {
+        layers.push(newLayer);
+        drawImageOnCanvas(newLayer);
+      };
+      newLayer.src = image.src;
+    }
+    
+    function handleMouseDown(event) {
+      canvas.addEventListener('mousemove', draw);
+    }
+    
+    function handleMouseUp(event) {
+      canvas.removeEventListener('mousemove', draw);
+    }
+    
+    function draw(event) {
+      var x = event.offsetX;
+      var y = event.offsetY;
+      var size = 5;
+      var color = '#000000';
+      
+      context.fillStyle = color;
+      context.beginPath();
+      context.arc(x, y, size, 0, Math.PI * 2, true);
+      context.closePath();
+      context.fill();
+    }
+    
+    function erase(event) {
+      var x = event.offsetX;
+      var y = event.offsetY;
+      var size = 10;
+      
+      context.clearRect(x - size / 2, y - size / 2, size, size);
+    }
+    
+    function clearCanvas() {
+      var confirmation = confirm('Are you sure you want to clear/reset?');
+      if (confirmation) {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        layers = [];
+        currentLayer = 0;
+      }
+    }
+    
+    document.getElementById('upload-input').addEventListener('change', handleFileUpload);
+    canvas.addEventListener('mousedown', handleMouseDown);
+    canvas.addEventListener('mouseup', handleMouseUp);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('contextmenu', erase);
+  </script>
+</body>
+</html>
